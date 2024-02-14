@@ -31,11 +31,20 @@ enum ValueType {
     Int(i64),
 }
 
+impl std::fmt::Display for ValueType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ValueType::String(s) => write!(f, "\"{s}\""),
+            ValueType::Int(i) => write!(f, "{i}"),
+        }
+    }
+}
+
 #[tokio::main]
 async fn main() -> io::Result<()> {
     let store = Arc::new(RwLock::new(Store::new()));
 
-    let res = tokio::spawn(repl(Arc::clone(&store)));
+    tokio::spawn(repl(Arc::clone(&store)));
 
     let listener = TcpListener::bind("0.0.0.1:3000").await?;
 
@@ -102,17 +111,19 @@ async fn repl(store: Arc<RwLock<Store>>) {
                 Commands::Get => {
                     let store_read = store.read().unwrap();
                     match store_read.get(tokens[1].to_string()) {
-                        Some(v) => println!("{:?}", v),
+                        Some(v) => println!("{}", v),
                         None => println!("Key not found"),
                     };
                 }
                 Commands::Put => {
                     let mut store_write = store.write().unwrap();
-                    store_write.put(tokens[1].to_string(), ValueType::String(tokens[2].to_string()));
-                },
-                // Commands::Exit => {
-                //     break 'outer;
-                // }
+                    store_write.put(
+                        tokens[1].to_string(),
+                        ValueType::String(tokens[2].to_string()),
+                    );
+                } // Commands::Exit => {
+                  //     break 'outer;
+                  // }
             },
             Err(e) => eprintln!("{:?}", e),
         }
