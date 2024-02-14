@@ -10,6 +10,15 @@ pub enum Commands {
     // Exit,
 }
 
+impl Commands {
+    pub fn num_args(&self) -> usize {
+        match self {
+            Commands::Get => 1,
+            Commands::Put => 2,
+        }
+    }
+}
+
 impl FromStr for Commands {
     type Err = Errors;
 

@@ -1,3 +1,5 @@
+#![allow(unused)]
+
 mod commands;
 mod errors;
 mod memtable;
@@ -5,6 +7,7 @@ mod store;
 
 use bincode;
 use commands::Commands;
+use errors::Errors;
 use serde::Deserialize;
 use std::{
     io::{self, BufRead, Write},
@@ -108,24 +111,39 @@ async fn repl(store: Arc<RwLock<Store>>) {
 
         match &tokens[0].parse::<Commands>() {
             Ok(command) => match command {
-                Commands::Get => {
-                    let store_read = store.read().unwrap();
-                    match store_read.get(tokens[1].to_string()) {
-                        Some(v) => println!("{}", v),
-                        None => println!("Key not found"),
-                    };
-                }
-                Commands::Put => {
-                    let mut store_write = store.write().unwrap();
-                    store_write.put(
-                        tokens[1].to_string(),
-                        ValueType::String(tokens[2].to_string()),
-                    );
-                } // Commands::Exit => {
-                  //     break 'outer;
-                  // }
+                Commands::Get => match check_num_params(Commands::Get, &tokens) {
+                    Ok(()) => {
+                        let store_read = store.read().unwrap();
+                        match store_read.get(tokens[1].to_string()) {
+                            Some(v) => println!("{}", v),
+                            None => println!("Key not found"),
+                        };
+                    }
+                    Err(()) => eprintln!("{:?}", Errors::IncorrectArgCount),
+                },
+                Commands::Put => match check_num_params(Commands::Put, &tokens) {
+                    Ok(()) => {
+                        let mut store_write = store.write().unwrap();
+                        store_write.put(
+                            tokens[1].to_string(),
+                            ValueType::String(tokens[2].to_string()),
+                        );
+                    }
+                    Err(()) => eprintln!("{:?}", Errors::IncorrectArgCount),
+                },
+                // Commands::Exit => {
+                //     break 'outer;
+                // }
             },
             Err(e) => eprintln!("{:?}", e),
         }
+    }
+}
+
+fn check_num_params(c_type: Commands, tokens: &Vec<&str>) -> Result<(), ()> {
+    if tokens.len() != c_type.num_args() + 1 {
+        Err(())
+    } else {
+        Ok(())
     }
 }
