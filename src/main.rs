@@ -45,7 +45,7 @@ impl std::fmt::Display for ValueType {
 
 #[tokio::main]
 async fn main() -> io::Result<()> {
-    let store = Arc::new(RwLock::new(Store::new()));
+    let store = Arc::new(Store::new());
 
     let repl_handle = tokio::spawn(repl(Arc::clone(&store)));
 
@@ -76,7 +76,7 @@ async fn main() -> io::Result<()> {
     Ok(())
 }
 
-async fn handle_connection(mut socket: TcpStream, store: Arc<RwLock<Store>>) {
+async fn handle_connection(mut socket: TcpStream, store: Arc<Store>) {
     let mut buf = [0; 1024];
 
     loop {
@@ -104,7 +104,7 @@ async fn handle_connection(mut socket: TcpStream, store: Arc<RwLock<Store>>) {
     }
 }
 
-async fn repl(store: Arc<RwLock<Store>>) {
+async fn repl(store: Arc<Store>) {
     let stdin = io::stdin();
     let mut reader = stdin.lock();
 
@@ -131,8 +131,7 @@ async fn repl(store: Arc<RwLock<Store>>) {
             Ok(command) => match command {
                 Commands::Get => match check_num_params(Commands::Get, &tokens) {
                     Ok(()) => {
-                        let store_read = store.read().unwrap();
-                        match store_read.get(tokens[1].to_string()) {
+                        match store.get(tokens[1].to_string()) {
                             Some(v) => println!("{}", v),
                             None => println!("Key not found"),
                         };
@@ -141,8 +140,7 @@ async fn repl(store: Arc<RwLock<Store>>) {
                 },
                 Commands::Put => match check_num_params(Commands::Put, &tokens) {
                     Ok(()) => {
-                        let mut store_write = store.write().unwrap();
-                        store_write.put(
+                        store.put(
                             tokens[1].to_string(),
                             ValueType::String(tokens[2].to_string()),
                         );

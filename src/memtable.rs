@@ -4,19 +4,19 @@ use crossbeam_skiplist::SkipMap;
 use std::sync::{atomic::AtomicUsize, Arc};
 
 pub struct MemTable {
-    map: Arc<SkipMap<String, ValueType>>,
+    map: SkipMap<String, ValueType>,
     size: Arc<AtomicUsize>,
 }
 
 impl MemTable {
     pub fn new() -> Self {
         Self {
-            map: Arc::new(SkipMap::new()),
+            map: SkipMap::new(),
             size: Arc::new(AtomicUsize::new(0)),
         }
     }
 
-    pub fn put(&mut self, key: String, value: ValueType) {
+    pub fn put(&self, key: String, value: ValueType) {
         self.map.insert(key, value);
     }
 
