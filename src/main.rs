@@ -47,15 +47,33 @@ impl std::fmt::Display for ValueType {
 async fn main() -> io::Result<()> {
     let store = Arc::new(RwLock::new(Store::new()));
 
-    tokio::spawn(repl(Arc::clone(&store)));
+    let repl_handle = tokio::spawn(repl(Arc::clone(&store)));
 
-    let listener = TcpListener::bind("0.0.0.1:3000").await?;
+    let server_handle = tokio::spawn(async move {
+        let listener = TcpListener::bind("127.0.0.1:8080")
+            .await
+            .expect("Failed to bind to port 3000");
 
-    loop {
-        let (socket, _) = listener.accept().await?;
+        loop {
+            let (socket, _) = listener
+                .accept()
+                .await
+                .expect("Failed to accept connection");
 
-        tokio::spawn(handle_connection(socket, Arc::clone(&store)));
+            tokio::spawn(handle_connection(socket, Arc::clone(&store)));
+        }
+    });
+
+    tokio::select! {
+        _ = repl_handle => {
+            println!("Exiting");
+        }
+        _ = server_handle => {
+
+        }
     }
+
+    Ok(())
 }
 
 async fn handle_connection(mut socket: TcpStream, store: Arc<RwLock<Store>>) {
@@ -131,9 +149,9 @@ async fn repl(store: Arc<RwLock<Store>>) {
                     }
                     Err(()) => eprintln!("{:?}", Errors::IncorrectArgCount),
                 },
-                // Commands::Exit => {
-                //     break 'outer;
-                // }
+                Commands::Exit => {
+                    break 'outer;
+                }
             },
             Err(e) => eprintln!("{:?}", e),
         }

@@ -7,7 +7,7 @@ pub enum Commands {
     Get,
     Put,
     // Delete,
-    // Exit,
+    Exit,
 }
 
 impl Commands {
@@ -15,6 +15,7 @@ impl Commands {
         match self {
             Commands::Get => 1,
             Commands::Put => 2,
+            Commands::Exit => 0,
         }
     }
 }
@@ -26,7 +27,7 @@ impl FromStr for Commands {
         match s.to_lowercase().as_str() {
             "get" => Ok(Commands::Get),
             "put" => Ok(Commands::Put),
-            // "exit" => Ok(Commands::Exit),
+            "exit" => Ok(Commands::Exit),
             _ => Err(Errors::UnknownCommand),
         }
     }
