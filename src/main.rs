@@ -2,8 +2,9 @@
 
 mod commands;
 mod errors;
-mod memtable;
 mod store;
+mod memtable;
+mod sstable;
 
 use bincode;
 use commands::Commands;
