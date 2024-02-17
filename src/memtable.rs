@@ -20,20 +20,13 @@ impl MemTable {
         }
     }
 
-    pub fn put(&self, key: String, value: ValueType) {
+    pub fn put(&self, key: String, value: ValueType) -> usize {
         let size = self.size.clone();
         size.store(size.load(Ordering::SeqCst) + 1, Ordering::SeqCst);
 
         self.map.insert(key, value);
 
-        println!("{}",size.load(Ordering::SeqCst));
-        if size.load(Ordering::SeqCst) >= 5 {
-            println!("Flushing memtable");
-            self.flush();
-
-            self.map.clear();
-            size.store(0, Ordering::SeqCst);
-        }
+        size.load(Ordering::SeqCst)
     }
 
     pub fn get(&self, key: String) -> Option<ValueType> {
@@ -43,7 +36,14 @@ impl MemTable {
         }
     }
 
-    fn flush(&self) {
-        let sstable = SSTable::new(1, &self.map);
+    pub fn flush(&self, id: usize) -> SSTable {
+        let sstable = SSTable::new(id, &self.map);
+
+        self.map.clear();
+
+        let size = self.size.clone();
+        size.store(0, Ordering::SeqCst);
+
+        sstable
     }
 }
